@@ -9,9 +9,9 @@ import io.papermc.paper.command.brigadier.Commands;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
-import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
+import simplexity.simplenicks.util.FoliaScheduler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import simplexity.simplenicks.SimpleNicks;
@@ -49,7 +49,7 @@ public class AdminLookupSubCommand implements SubCommand {
         OfflinePlayer lookupTarget = ctx.getArgument("player", OfflinePlayer.class);
         String username = lookupTarget.getName();
         if (username == null) throw Exceptions.INVALID_PLAYER_SPECIFIED.create(lookupTarget);
-        Bukkit.getScheduler().runTaskAsynchronously(SimpleNicks.getInstance(), () -> {
+        FoliaScheduler.async(SimpleNicks.getInstance(), () -> {
             Nickname currentNickname = NicknameProcessor.getInstance().getCurrentNickname(lookupTarget);
             List<Nickname> savedNicknames = NicknameProcessor.getInstance().getSavedNicknames(lookupTarget);
             sender.sendMessage(lookupInfoComponent(username, currentNickname, savedNicknames));

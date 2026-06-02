@@ -10,11 +10,13 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import simplexity.simplenicks.SimpleNicks;
 import simplexity.simplenicks.config.ConfigHandler;
 import simplexity.simplenicks.logic.NickUtils;
+import simplexity.simplenicks.util.FoliaScheduler;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,7 +52,7 @@ public class SaveMigrator {
     private static final List<NicknameRecord> records = new ArrayList<>();
     private static final AtomicInteger processed = new AtomicInteger();
     private static final AtomicInteger failed = new AtomicInteger();
-    private static int taskId;
+    private static ScheduledTask notifierTask;
 
     /**
      * Migrates all nickname data from the legacy YAML file ("nickname_data.yml") into the current database format.
@@ -78,8 +80,8 @@ public class SaveMigrator {
 
         Set<String> savedUuids = nicknameData.getKeys(false);
         int totalUuids = savedUuids.size();
-        taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(SimpleNicks.getInstance(), () -> consoleNotifier(totalUuids), 0L, 100L);
-        Bukkit.getScheduler().runTaskAsynchronously(SimpleNicks.getInstance(), () -> {
+        notifierTask = FoliaScheduler.globalTimer(SimpleNicks.getInstance(), () -> consoleNotifier(totalUuids), 1L, 100L);
+        FoliaScheduler.async(SimpleNicks.getInstance(), () -> {
             for (String uuidKey : savedUuids) {
                 saveChecks(uuidKey, nicknameData);
             }
@@ -97,7 +99,7 @@ public class SaveMigrator {
             } else {
                 logger.info("Successfully renamed 'nickname_data.yml' - this migration process will no longer be attempted (unless you rename it back, for some reason, I wouldn't recommend that)");
             }
-            Bukkit.getScheduler().cancelTask(taskId);
+            if (notifierTask != null) notifierTask.cancel();
         });
     }
 

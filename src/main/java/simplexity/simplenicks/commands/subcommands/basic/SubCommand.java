@@ -10,7 +10,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.apache.commons.lang3.NotImplementedException;
-import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -21,6 +20,7 @@ import simplexity.simplenicks.config.ConfigHandler;
 import simplexity.simplenicks.config.LocaleMessage;
 import simplexity.simplenicks.logic.NickUtils;
 import simplexity.simplenicks.saving.Nickname;
+import simplexity.simplenicks.util.FoliaScheduler;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -113,8 +113,9 @@ public interface SubCommand {
     }
 
     default void refreshName(@NotNull OfflinePlayer player) {
-        if (!player.isOnline()) return;
-        Bukkit.getScheduler().runTask(SimpleNicks.getInstance(), () -> NickUtils.refreshDisplayName(player.getUniqueId()));
+        Player online = player.getPlayer();
+        if (online == null) return;
+        FoliaScheduler.onEntity(SimpleNicks.getInstance(), online, () -> NickUtils.refreshDisplayName(online.getUniqueId()));
     }
 
     default boolean permissionNotRequired() {

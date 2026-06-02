@@ -1,3 +1,93 @@
+# TownyFlight - Folia / Canvas adaptation
+
+Unofficial fork of [TownyFlight by TownyAdvanced](https://github.com/TownyAdvanced/TownyFlight), adapted to run
+cleanly under **[Folia](https://github.com/PaperMC/Folia)** region threading (and its
+[Canvas](https://github.com/CraftCanvasMC/Canvas) fork) on modern Paper builds, including **Minecraft 26.1.2**.
+
+**This is an adaptation, not a rewrite.** TownyFlight already routes its scheduling through Towny's own Folia-aware
+`TaskScheduler`, so most of it was Folia-ready - it simply was not marked `folia-supported`, so a region-threaded
+server refused to load it. On top of that, a few code paths changed a player's flight from a thread that did not own
+that player's region, which Folia/Canvas reject.
+
+**What this fork changes (and only this):**
+
+* the plugin is marked `folia-supported: true`,
+* `TownyFlightAPI.addFlight` / `removeFlight` now hop onto the **region thread that owns the player** before touching
+  flight when they are reached from an off-region path (the async tempflight countdown, and the commands that sweep
+  every online player). When already on the player's thread - the normal command and event case - they run inline,
+  unchanged,
+* `takeFlightFromPlayersInTown` runs its per-player location checks and flight removal on **each player's own region
+  thread** instead of inline from the command thread.
+
+Two small thread guards plus per-player dispatch; the flight rules, config and messages are untouched. The guards
+use Towny's `TaskScheduler`, so the same jar still behaves correctly on plain Paper/Spigot.
+
+**Actively developed and supported** by the [suzeren.org](https://suzeren.org) network, where it runs in production
+on a Canvas (Folia) backend alongside Towny. Branch: `folia`, built against the same Java 21 toolchain as upstream.
+
+<p align="center">
+  <a href="https://pterohost.com">
+    <img src="https://pterohost.com/images/branding/logo-sm.webp" alt="Pterohost - game server hosting with Folia and Paper support" height="64">
+  </a>
+</p>
+<p align="center">
+  <b>Этот форк развивается и тестируется на <a href="https://pterohost.com">Pterohost</a></b><br>
+  Игровой хостинг с нативной поддержкой Folia и Paper, мгновенный деплой и удобная панель управления.<br>
+  <i>Developed and battle tested on <a href="https://pterohost.com">Pterohost</a> - game server hosting with first class Folia and Paper support.</i>
+</p>
+<p align="center">
+  <a href="https://discord.gg/BayzJzArBa">Pterohost Discord</a>
+  &nbsp;|&nbsp;
+  <a href="https://suzeren.org">suzeren.org</a>
+</p>
+
+---
+
+# SimpleNicks - Folia / Canvas adaptation
+
+Unofficial fork of [SimpleNicks by Simplexity-Development](https://github.com/Simplexity-Development/SimpleNicks),
+adapted to run cleanly under **[Folia](https://github.com/PaperMC/Folia)** region threading (and its
+[Canvas](https://github.com/CraftCanvasMC/Canvas) fork) on modern Paper builds, including **Minecraft 26.1.2**.
+
+**This is an adaptation, not a rewrite.** All of SimpleNicks' behaviour, commands and storage are unchanged. The
+only problem on a region-threaded server was scheduling: SimpleNicks used the legacy `Bukkit.getScheduler()` for its
+database work and display-name updates, which a Folia/Canvas server does not provide, so the plugin could not be
+marked `folia-supported`.
+
+**What this fork changes (and only this):** a small `FoliaScheduler` bridge now stands in front of every place that
+used `Bukkit.getScheduler()` -
+
+* database reads and writes run on the **async scheduler** (`Bukkit.getAsyncScheduler()`),
+* display-name and tab-name refreshes run on the **region thread that owns that player** (`entity.getScheduler()`),
+  so the nickname is applied on the correct thread even when several players sit in different regions,
+* the one-time legacy-data migration progress task runs on the **global region scheduler**
+  (`Bukkit.getGlobalRegionScheduler()`),
+
+and the plugin is marked `folia-supported: true`. The bridge also works on plain Paper, so the same jar runs
+everywhere. No command, message or database logic was touched.
+
+**Actively developed and supported** by the [suzeren.org](https://suzeren.org) network, where it runs in production
+on a Canvas (Folia) backend. Branch: `folia`. Compiled to Java 21 bytecode like upstream (built with a JDK 25
+compiler because upstream's `miniplaceholders-api` dependency ships Java 25 class files).
+
+<p align="center">
+  <a href="https://pterohost.com">
+    <img src="https://pterohost.com/images/branding/logo-sm.webp" alt="Pterohost - game server hosting with Folia and Paper support" height="64">
+  </a>
+</p>
+<p align="center">
+  <b>Этот форк развивается и тестируется на <a href="https://pterohost.com">Pterohost</a></b><br>
+  Игровой хостинг с нативной поддержкой Folia и Paper, мгновенный деплой и удобная панель управления.<br>
+  <i>Developed and battle tested on <a href="https://pterohost.com">Pterohost</a> - game server hosting with first class Folia and Paper support.</i>
+</p>
+<p align="center">
+  <a href="https://discord.gg/BayzJzArBa">Pterohost Discord</a>
+  &nbsp;|&nbsp;
+  <a href="https://suzeren.org">suzeren.org</a>
+</p>
+
+---
+
 <div align="center">
   <table>
     <tr>
