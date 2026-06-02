@@ -6,10 +6,10 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
-import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import simplexity.simplenicks.util.FoliaScheduler;
 import org.jetbrains.annotations.NotNull;
 import simplexity.simplenicks.SimpleNicks;
 import simplexity.simplenicks.commands.NicknameProcessor;
@@ -51,19 +51,19 @@ public class AdminSetSubCommand implements SubCommand {
         Nickname nickname = ctx.getArgument("nickname", Nickname.class);
         if (!NickUtils.isValidTags(sender, nickname.getNickname())) throw Exceptions.ERROR_TAGS_NOT_PERMITTED.create();
         NickUtils.nicknameChecks(sender, nickname);
-        Bukkit.getScheduler().runTaskAsynchronously(SimpleNicks.getInstance(), () -> {
+        FoliaScheduler.async(SimpleNicks.getInstance(), () -> {
             boolean success = NicknameProcessor.getInstance().setNickname(target, nickname.getNickname());
-            if (success) {
-                Bukkit.getScheduler().runTask(SimpleNicks.getInstance(), () -> {
-                    if ((target instanceof Player onlineTarget)) {
-                        NickUtils.refreshDisplayName(target.getUniqueId());
-                        onlineTarget.sendMessage(parseAdminMessage(LocaleMessage.SET_BY_INITIATOR.getMessage(), nickname.getNickname(), sender, target));
-                    }
-                    sender.sendMessage(parseAdminMessage(LocaleMessage.SET_TARGET.getMessage(), nickname.getNickname(), sender, target));
-                });
-            } else {
+            if (!success) {
                 sender.sendRichMessage(LocaleMessage.ERROR_SET_FAILURE.getMessage());
+                return;
             }
+            if (target instanceof Player onlineTarget) {
+                FoliaScheduler.onEntity(SimpleNicks.getInstance(), onlineTarget, () -> {
+                    NickUtils.refreshDisplayName(target.getUniqueId());
+                    onlineTarget.sendMessage(parseAdminMessage(LocaleMessage.SET_BY_INITIATOR.getMessage(), nickname.getNickname(), sender, target));
+                });
+            }
+            sender.sendMessage(parseAdminMessage(LocaleMessage.SET_TARGET.getMessage(), nickname.getNickname(), sender, target));
         });
         return Command.SINGLE_SUCCESS;
     }

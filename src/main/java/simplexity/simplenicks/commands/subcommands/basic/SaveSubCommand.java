@@ -6,7 +6,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import simplexity.simplenicks.SimpleNicks;
@@ -17,6 +16,7 @@ import simplexity.simplenicks.config.ConfigHandler;
 import simplexity.simplenicks.config.LocaleMessage;
 import simplexity.simplenicks.logic.NickUtils;
 import simplexity.simplenicks.saving.Nickname;
+import simplexity.simplenicks.util.FoliaScheduler;
 import simplexity.simplenicks.util.NickPermission;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -45,10 +45,10 @@ public class SaveSubCommand implements SubCommand {
             throw Exceptions.ERROR_CANNOT_SAVE.create();
         }
         checkSaveSlots(player);
-        Bukkit.getScheduler().runTaskAsynchronously(SimpleNicks.getInstance(), () -> {
+        FoliaScheduler.async(SimpleNicks.getInstance(), () -> {
             boolean saved = NicknameProcessor.getInstance().saveNickname(player, nickname.getNickname());
             if (saved) {
-                Bukkit.getScheduler().runTask(SimpleNicks.getInstance(), () -> {
+                FoliaScheduler.onEntity(SimpleNicks.getInstance(), player, () -> {
                     NickUtils.refreshDisplayName(player.getUniqueId());
                     sendFeedback(player, LocaleMessage.SAVE_NICK, nickname);
                 });
@@ -67,7 +67,7 @@ public class SaveSubCommand implements SubCommand {
         if (NicknameProcessor.getInstance().playerAlreadySavedThis(player, nickname.getNickname())) {
             throw Exceptions.ERROR_ALREADY_SAVED.create();
         }
-        Bukkit.getScheduler().runTaskAsynchronously(SimpleNicks.getInstance(), () -> {
+        FoliaScheduler.async(SimpleNicks.getInstance(), () -> {
             boolean saved = NicknameProcessor.getInstance().saveNickname(player, nickname.getNickname());
             if (saved) {
                 sendFeedback(player, LocaleMessage.SAVE_NICK, nickname);

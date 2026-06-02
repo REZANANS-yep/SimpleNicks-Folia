@@ -6,7 +6,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import simplexity.simplenicks.SimpleNicks;
@@ -15,6 +14,7 @@ import simplexity.simplenicks.commands.arguments.NicknameArgument;
 import simplexity.simplenicks.config.LocaleMessage;
 import simplexity.simplenicks.logic.NickUtils;
 import simplexity.simplenicks.saving.Nickname;
+import simplexity.simplenicks.util.FoliaScheduler;
 import simplexity.simplenicks.util.NickPermission;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -38,10 +38,10 @@ public class DeleteSubCommand implements SubCommand {
     public int execute(@NotNull CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         Player player = (Player) ctx.getSource().getSender();
         Nickname nickname = ctx.getArgument("nickname", Nickname.class);
-        Bukkit.getScheduler().runTaskAsynchronously(SimpleNicks.getInstance(), () -> {
+        FoliaScheduler.async(SimpleNicks.getInstance(), () -> {
             boolean success = NicknameProcessor.getInstance().deleteNickname(player, nickname.getNickname());
             if (success) {
-                Bukkit.getScheduler().runTask(SimpleNicks.getInstance(), () -> {
+                FoliaScheduler.onEntity(SimpleNicks.getInstance(), player, () -> {
                     NickUtils.refreshDisplayName(player.getUniqueId());
                     sendFeedback(player, LocaleMessage.DELETE_SELF, nickname);
                 });

@@ -6,7 +6,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import simplexity.simplenicks.SimpleNicks;
@@ -16,6 +15,7 @@ import simplexity.simplenicks.commands.subcommands.Exceptions;
 import simplexity.simplenicks.config.LocaleMessage;
 import simplexity.simplenicks.logic.NickUtils;
 import simplexity.simplenicks.saving.Nickname;
+import simplexity.simplenicks.util.FoliaScheduler;
 import simplexity.simplenicks.util.NickPermission;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -45,11 +45,11 @@ public class SetSubCommand implements SubCommand {
         Player player = (Player) ctx.getSource().getSender();
         if (!NickUtils.isValidTags(player, nickname.getNickname())) throw Exceptions.ERROR_TAGS_NOT_PERMITTED.create();
         NickUtils.nicknameChecks(player, nickname);
-        Bukkit.getScheduler().runTaskAsynchronously(SimpleNicks.getInstance(), () -> {
+        FoliaScheduler.async(SimpleNicks.getInstance(), () -> {
             boolean succeeded = NicknameProcessor.getInstance().setNickname(player, nickname.getNickname());
             if (succeeded) {
-                Bukkit.getScheduler().runTask(SimpleNicks.getInstance(), () -> {
-                    refreshName(player);
+                FoliaScheduler.onEntity(SimpleNicks.getInstance(), player, () -> {
+                    NickUtils.refreshDisplayName(player.getUniqueId());
                     sendFeedback(player, LocaleMessage.SET_SELF, nickname);
                 });
             } else {

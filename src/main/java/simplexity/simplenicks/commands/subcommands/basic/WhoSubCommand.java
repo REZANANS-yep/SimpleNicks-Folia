@@ -9,7 +9,6 @@ import io.papermc.paper.command.brigadier.Commands;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
-import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +17,7 @@ import simplexity.simplenicks.commands.arguments.NicknameArgument;
 import simplexity.simplenicks.config.ConfigHandler;
 import simplexity.simplenicks.config.LocaleMessage;
 import simplexity.simplenicks.config.MessageUtils;
+import simplexity.simplenicks.util.FoliaScheduler;
 import simplexity.simplenicks.logic.NickUtils;
 import simplexity.simplenicks.saving.Nickname;
 import simplexity.simplenicks.util.NickPermission;
@@ -43,7 +43,7 @@ public class WhoSubCommand implements SubCommand {
     public int execute(@NotNull CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         CommandSender sender = ctx.getSource().getSender();
         Nickname nickname = ctx.getArgument("nickname", Nickname.class);
-        Bukkit.getScheduler().runTaskAsynchronously(SimpleNicks.getInstance(), () -> {
+        FoliaScheduler.async(SimpleNicks.getInstance(), () -> {
             List<OfflinePlayer> playersWithNick = NickUtils.getOfflinePlayersByNickname(nickname.getNormalizedNickname());
 
             if (playersWithNick.isEmpty()) {

@@ -1,3 +1,48 @@
+# SimpleNicks - Folia / Canvas adaptation
+
+Unofficial fork of [SimpleNicks by Simplexity-Development](https://github.com/Simplexity-Development/SimpleNicks),
+adapted to run cleanly under **[Folia](https://github.com/PaperMC/Folia)** region threading (and its
+[Canvas](https://github.com/CraftCanvasMC/Canvas) fork) on modern Paper builds, including **Minecraft 26.1.2**.
+
+**This is an adaptation, not a rewrite.** All of SimpleNicks' behaviour, commands and storage are unchanged. The
+only problem on a region-threaded server was scheduling: SimpleNicks used the legacy `Bukkit.getScheduler()` for its
+database work and display-name updates, which a Folia/Canvas server does not provide, so the plugin could not be
+marked `folia-supported`.
+
+**What this fork changes (and only this):** a small `FoliaScheduler` bridge now stands in front of every place that
+used `Bukkit.getScheduler()` -
+
+* database reads and writes run on the **async scheduler** (`Bukkit.getAsyncScheduler()`),
+* display-name and tab-name refreshes run on the **region thread that owns that player** (`entity.getScheduler()`),
+  so the nickname is applied on the correct thread even when several players sit in different regions,
+* the one-time legacy-data migration progress task runs on the **global region scheduler**
+  (`Bukkit.getGlobalRegionScheduler()`),
+
+and the plugin is marked `folia-supported: true`. The bridge also works on plain Paper, so the same jar runs
+everywhere. No command, message or database logic was touched.
+
+**Actively developed and supported** by the [suzeren.org](https://suzeren.org) network, where it runs in production
+on a Canvas (Folia) backend. Branch: `folia`. Compiled to Java 21 bytecode like upstream (built with a JDK 25
+compiler because upstream's `miniplaceholders-api` dependency ships Java 25 class files).
+
+<p align="center">
+  <a href="https://pterohost.com">
+    <img src="https://pterohost.com/images/branding/logo-sm.webp" alt="Pterohost - game server hosting with Folia and Paper support" height="64">
+  </a>
+</p>
+<p align="center">
+  <b>Этот форк развивается и тестируется на <a href="https://pterohost.com">Pterohost</a></b><br>
+  Игровой хостинг с нативной поддержкой Folia и Paper, мгновенный деплой и удобная панель управления.<br>
+  <i>Developed and battle tested on <a href="https://pterohost.com">Pterohost</a> - game server hosting with first class Folia and Paper support.</i>
+</p>
+<p align="center">
+  <a href="https://discord.gg/BayzJzArBa">Pterohost Discord</a>
+  &nbsp;|&nbsp;
+  <a href="https://suzeren.org">suzeren.org</a>
+</p>
+
+---
+
 <div align="center">
   <table>
     <tr>
